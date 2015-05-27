@@ -55,7 +55,7 @@ class SimpleSAML_XHTML_Template {
      * Wrap Language->isLanguageRTL
      */
     private function isLanguageRTL() {
-        return $this->translator->isLanguageRTL();
+        return $this->translator->language->isLanguageRTL();
     }
 
 
@@ -63,7 +63,7 @@ class SimpleSAML_XHTML_Template {
      * Wraps Language->getLanguageList
      */
     private function getLanguageList() {
-        return $this->translator->getLanguageList();
+        return $this->translator->language->getLanguageList();
     }
 
 
