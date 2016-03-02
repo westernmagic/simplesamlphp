@@ -25,6 +25,13 @@ class SimpleSAML_XHTML_Template
     private $translator;
 
     /**
+     * The localization backend
+     *
+     * @var \SimpleSAML\Locale\Localization
+     */
+    private $localization;
+
+    /**
      * The configuration to use in this template.
      *
      * @var SimpleSAML_Configuration
@@ -57,6 +64,7 @@ class SimpleSAML_XHTML_Template
         $this->template = $template;
         $this->data['baseurlpath'] = $this->configuration->getBaseURL();
         $this->translator = new \SimpleSAML\Locale\Translate($configuration, $defaultDictionary);
+        $this->localization = new \SimpleSAML\Locale\Localization($configuration);
         $this->twig = $this->setupTwig();
     }
 
@@ -134,7 +142,12 @@ class SimpleSAML_XHTML_Template
         }
 
         $auto_reload = $this->configuration->getBoolean('template.auto_reload', false);
-        return new \Twig_Environment($loader, array('cache' => $cache, 'auto_reload' => $auto_reload));
+        $twig = new \Twig_Environment($loader, array('cache' => $cache, 'auto_reload' => $auto_reload));
+        if ($this->localization->i18nBackend == 'twig.i18n') {
+            $this->localization->activateDomain('ssp');
+            $twig->addExtension(new \Twig_Extensions_Extension_I18n());
+        }
+        return $twig;
     }
 
     /*
