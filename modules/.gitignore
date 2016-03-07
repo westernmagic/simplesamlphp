@@ -27,6 +27,7 @@
 !/ldap/
 !/memcacheMonitor/
 !/metarefresh/
+!/migration/
 !/multiauth/
 !/negotiate/
 !/oauth/

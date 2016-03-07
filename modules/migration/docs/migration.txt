@@ -1,0 +1,13 @@
+Migration module
+================
+
+<!-- {{TOC}} -->
+
+
+The migration module is a demonstration of a SimpleSAMLPHP 2.0 module.
+It will be removed in 2.0.
+
+It contains:
+
+* Some themes for twig
+* It's own translation domain
