@@ -70,7 +70,10 @@ class Language
     private $customFunction;
 
     /**
-     * A list of languages supported with their names localized, indexed by ISO 639-2 code.
+     * A list of languages supported with their names localized.
+     * Indexed by something that mostly resembles ISO 639-1 code,
+     * with some charming SimpleSAML-specific variants...
+     * that must remain before 2.0 due to backwards compatibility
      *
      * @var array
      */
