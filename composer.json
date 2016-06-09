@@ -27,7 +27,7 @@
     },
     "require": {
         "php": ">=5.3",
-        "simplesamlphp/saml2": "~1.9",
+        "simplesamlphp/saml2": "dev-release-1.x",
         "robrichards/xmlseclibs": "~1.4.1",
         "whitehat101/apr1-md5": "~1.0"
     },
@@ -39,5 +39,11 @@
     "support": {
         "issues": "https://github.com/simplesamlphp/simplesamlphp/issues",
         "source": "https://github.com/simplesamlphp/simplesamlphp"
-    }
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/westernmagic/simplesamlphp"
+        }
+    ]
 }
