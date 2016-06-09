@@ -16,7 +16,6 @@ $config = array(
      *
      * Valid format for 'baseurlpath' is:
      * [(http|https)://(hostname|fqdn)[:port]]/[path/to/simplesaml/]
-     * (note that it must end with a '/')
      *
      * The full url format is useful if your SimpleSAMLphp setup is hosted behind
      * a reverse proxy. In that case you can specify the external url here.
@@ -103,6 +102,17 @@ $config = array(
      *   'trusted.url.domains' => array('sp.example.com', 'app.example.com'),
      */
     'trusted.url.domains' => array(),
+
+    /*
+     * Enable regular expression matching of trusted.url.domains.
+     *
+     * Set to true to treat the values in trusted.url.domains as regular
+     * expressions. Set to false to do exact string matching.
+     *
+     * If enabled, the start and end delimiters ('^' and '$') will be added to
+     * all regular expressions in trusted.url.domains.
+     */
+    'trusted.url.regex' => false,
 
     /*
      * Enable secure POST from HTTPS to HTTP.

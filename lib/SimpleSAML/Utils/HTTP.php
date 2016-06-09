@@ -324,12 +324,30 @@ class HTTP
             preg_match('@^https?://([^/]+)@i', $url, $matches);
             $hostname = $matches[1];
 
-            // add self host to the white list
             $self_host = self::getSelfHostWithNonStandardPort();
-            $trustedSites[] = $self_host;
+
+            $trustedRegex = \SimpleSAML_Configuration::getInstance()->getValue('trusted.url.regex', false);
+
+            $trusted = false;
+            if ($trustedRegex) {
+                // add self host to the white list
+                $trustedSites[] = preg_quote($self_host);
+                foreach ($trustedSites as $regex) {
+                    // Add start and end delimiters.
+                    $regex = "@^{$regex}$@";
+                    if (preg_match($regex, $hostname)) {
+                        $trusted = true;
+                        break;
+                    }
+                }
+            } else {
+                // add self host to the white list
+                $trustedSites[] = $self_host;
+                $trusted = in_array($hostname, $trustedSites);
+            }
 
             // throw exception due to redirection to untrusted site
-            if (!in_array($hostname, $trustedSites)) {
+            if (!$trusted) {
                 throw new \SimpleSAML_Error_Exception('URL not allowed: '.$url);
             }
         }
@@ -548,9 +566,9 @@ class HTTP
         $globalConfig = \SimpleSAML_Configuration::getInstance();
         $baseURL = $globalConfig->getString('baseurlpath', 'simplesaml/');
 
-        if (preg_match('#^https?://.*/$#D', $baseURL, $matches)) {
+        if (preg_match('#^https?://.*/?$#D', $baseURL, $matches)) {
             // full URL in baseurlpath, override local server values
-            return $baseURL;
+            return rtrim($baseURL, '/').'/';
         } elseif (
             (preg_match('#^/?([^/]?.*/)$#D', $baseURL, $matches)) ||
             (preg_match('#^\*(.*)/$#D', $baseURL, $matches)) ||
@@ -563,7 +581,7 @@ class HTTP
 
             $hostname = self::getServerHost();
             $port = self::getServerPort();
-            $path = '/'.$globalConfig->getBaseURL();
+            $path = $globalConfig->getBasePath();
 
             return $protocol.$hostname.$port.$path;
         } else {
@@ -691,31 +709,30 @@ class HTTP
 
 
     /**
-     * Retrieve the current, complete URL.
+     * Retrieve the current URL using the base URL in the configuration.
      *
      * @return string The current URL, including query parameters.
      *
      * @author Andreas Solberg, UNINETT AS <andreas.solberg@uninett.no>
      * @author Olav Morken, UNINETT AS <olav.morken@uninett.no>
+     * @author Jaime Perez, UNINETT AS <jaime.perez@uninett.no>
      */
     public static function getSelfURL()
     {
-        $url = self::getSelfURLHost();
-        $requestURI = $_SERVER['REQUEST_URI'];
-        if ($requestURI[0] !== '/') {
-            // we probably have a URL of the form: http://server/
-            if (preg_match('#^https?://[^/]*(/.*)#i', $requestURI, $matches)) {
-                $requestURI = $matches[1];
-            }
-        }
-        return $url.$requestURI;
+        $url = self::getBaseURL();
+        $cfg = \SimpleSAML_Configuration::getInstance();
+        $baseDir = $cfg->getBaseDir();
+        $rel_path = str_replace($baseDir.'www/', '', $_SERVER['SCRIPT_FILENAME']);
+        $pos = strpos($_SERVER['REQUEST_URI'], $rel_path) + strlen($rel_path);
+        return $url.$rel_path.substr($_SERVER['REQUEST_URI'], $pos);
     }
 
 
     /**
-     * Retrieve a URL containing the protocol, the current host and optionally, the port number.
+     * Retrieve the current URL using the base URL in the configuration, containing the protocol, the host and
+     * optionally, the port number.
      *
-     * @return string The current URL without a URL path or query parameters.
+     * @return string The current URL without path or query parameters.
      *
      * @author Andreas Solberg, UNINETT AS <andreas.solberg@uninett.no>
      * @author Olav Morken, UNINETT AS <olav.morken@uninett.no>
@@ -730,20 +747,21 @@ class HTTP
 
 
     /**
-     * Retrieve the current URL without the query parameters.
+     * Retrieve the current URL using the base URL in the configuration, without the query parameters.
      *
      * @return string The current URL, not including query parameters.
      *
      * @author Andreas Solberg, UNINETT AS <andreas.solberg@uninett.no>
+     * @author Jaime Perez, UNINETT AS <jaime.perez@uninett.no>
      */
     public static function getSelfURLNoQuery()
     {
-        $url = self::getSelfURLHost();
-        $url .= $_SERVER['SCRIPT_NAME'];
-        if (isset($_SERVER['PATH_INFO'])) {
-            $url .= $_SERVER['PATH_INFO'];
+        $url = self::getSelfURL();
+        $pos = strpos($url, '?');
+        if (!$pos) {
+            return $url;
         }
-        return $url;
+        return substr($url, 0, $pos);
     }
 
 
@@ -812,6 +830,10 @@ class HTTP
         }
 
         $res = array();
+        if (empty($query_string)) {
+            return $res;
+        }
+
         foreach (explode('&', $query_string) as $param) {
             $param = explode('=', $param);
             $name = urldecode($param[0]);
@@ -940,14 +962,13 @@ class HTTP
             return $baseScheme.$url;
         }
 
-        $firstChar = substr($url, 0, 1);
-        if ($firstChar === '/') {
+        if ($url[0] === '/') {
             return $baseHost.$url;
         }
-        if ($firstChar === '?') {
+        if ($url[0] === '?') {
             return $basePath.$url;
         }
-        if ($firstChar === '#') {
+        if ($url[0] === '#') {
             return $baseQuery.$url;
         }
 
